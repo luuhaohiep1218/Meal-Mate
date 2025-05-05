@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Mealmate",
+    "slug": "Mealmate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.luuhaohiep1218.Mealmate"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.luuhaohiep1218.Mealmate"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-web-browser"],
+    "extra": {
+      "eas": {
+        "projectId": "5119da6c-aa01-4fe6-bc00-5ba29402ce76"
+      }
+    },
+    "scheme": "Mealmate"
+  }
+}
