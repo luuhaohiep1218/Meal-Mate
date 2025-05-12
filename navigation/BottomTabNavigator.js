@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 
 import DailyScreen from "../screens/DailyScreen";
-import MenuScreen from "../screens/MenuScreen";
+import MenuStack from "./MenuStack";
 import AddScreen from "../screens/AddScreen";
 import RecipeBookScreen from "../screens/RecipeBookScreen";
 import ProfileScreen from "../screens/ProfileScreen";
@@ -45,7 +45,7 @@ const BottomTabNavigator = () => {
       })}
     >
       <Tab.Screen name="Hằng ngày" component={DailyScreen} />
-      <Tab.Screen name="Thực đơn" component={MenuScreen} />
+      <Tab.Screen name="Thực đơn" component={MenuStack} />
       <Tab.Screen name="Thêm" component={AddScreen} />
       <Tab.Screen name="Sách nấu ăn" component={RecipeBookScreen} />
       <Tab.Screen name="Thông tin" component={ProfileScreen} />

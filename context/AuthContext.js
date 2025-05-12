@@ -19,10 +19,8 @@ export const AuthProvider = ({ children }) => {
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId:
       "384508604797-lk2sjv5kmtm5i2cujqkb11nojvgu2uke.apps.googleusercontent.com",
-    clientId:
-      "852942516467-etu2om39b1dlurib8o5rbt3p5aqo35ge.apps.googleusercontent.com",
     androidClientId:
-      "384508604797-um7ohonkodsvboiigfu0mpadosftuokh.apps.googleusercontent.com",
+      "384508604797-2pvba89k1hp5c4iopi00hka14nb45rgs.apps.googleusercontent.com",
   });
 
   const checkLocalUser = async () => {

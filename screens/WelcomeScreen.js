@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-import ModalLogin from "../components/modals/ModalLogin";
+import AuthModal from "../components/modals/AuthModal";
 
 export default function WelcomeScreen() {
   const navigation = useNavigation();
@@ -46,7 +46,7 @@ export default function WelcomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <ModalLogin
+      <AuthModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
       />
