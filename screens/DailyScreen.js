@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,58 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
-
+import MealModal from "../components/modals/MealModal";
 const DailyScreen = () => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentMeal, setCurrentMeal] = useState(null);
+  const [mealCalories, setMealCalories] = useState({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+  });
+  const [totalCalories, setTotalCalories] = useState(0);
+
+  const mealData = [
+    {
+      type: "breakfast",
+      name: "Bữa sáng",
+      icon: "coffee",
+      suggestion: "418-586",
+      maxCalories: 586,
+    },
+    {
+      type: "lunch",
+      name: "Bữa trưa",
+      icon: "utensils",
+      suggestion: "502-670",
+      maxCalories: 670,
+    },
+    {
+      type: "dinner",
+      name: "Bữa tối",
+      icon: "drumstick-bite",
+      suggestion: "653-854",
+      maxCalories: 854,
+    },
+  ];
+
+  const handleMealPress = (meal) => {
+    setCurrentMeal(meal);
+    setModalVisible(true);
+  };
+
+  const handleAddFood = (mealType, items, calories) => {
+    setMealCalories({
+      ...mealCalories,
+      [mealType]: calories,
+    });
+    setTotalCalories(
+      Object.values({
+        ...mealCalories,
+        [mealType]: calories,
+      }).reduce((a, b) => a + b, 0)
+    );
+  };
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -36,21 +86,6 @@ const DailyScreen = () => {
         <Text style={styles.kcalLabel}>kcal</Text>
       </View>
 
-      {/* Macronutrients */}
-      <View style={styles.macros}>
-        {[
-          { label: "Tinh bột", value: "0/209g" },
-          { label: "Chất đạm", value: "0/84g" },
-          { label: "Chất béo", value: "0/56g" },
-        ].map((item, index) => (
-          <View key={index} style={styles.macroItem}>
-            <Text style={styles.macroLabel}>{item.label}</Text>
-            <View style={styles.progressBar} />
-            <Text style={styles.macroValue}>{item.value}</Text>
-          </View>
-        ))}
-      </View>
-
       {/* Date */}
       <View style={styles.dateRow}>
         <Ionicons name="chevron-back" size={20} />
@@ -61,21 +96,38 @@ const DailyScreen = () => {
 
       {/* Meals */}
       <View style={styles.mealContainer}>
-        {[
-          { name: "Bữa sáng", kcal: "418-586", icon: "coffee" },
-          { name: "Bữa trưa", kcal: "502-670", icon: "utensils" },
-          { name: "Bữa tối", kcal: "653-854", icon: "drumstick-bite" },
-        ].map((meal, index) => (
-          <TouchableOpacity key={index} style={styles.mealCard}>
+        {mealData.map((meal, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.mealCard}
+            onPress={() => handleMealPress(meal)}
+          >
             <FontAwesome5 name={meal.icon} size={24} color="#000" />
             <View style={styles.mealInfo}>
               <Text style={styles.mealTitle}>{meal.name}</Text>
-              <Text style={styles.mealSuggestion}>Gợi ý: {meal.kcal} kcal</Text>
+              <Text style={styles.mealSuggestion}>
+                {mealCalories[meal.type] > 0
+                  ? `${mealCalories[meal.type]} kcal`
+                  : `Gợi ý: ${meal.suggestion} kcal`}
+              </Text>
             </View>
             <Ionicons name="add-circle-outline" size={28} color="#000" />
           </TouchableOpacity>
         ))}
       </View>
+
+      {currentMeal && (
+        <MealModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onAddFood={(items, calories) =>
+            handleAddFood(currentMeal.type, items, calories)
+          }
+          maxCalories={currentMeal.maxCalories}
+          mealType={currentMeal.type}
+          mealName={currentMeal.name}
+        />
+      )}
     </ScrollView>
   );
 };
