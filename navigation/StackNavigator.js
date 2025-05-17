@@ -1,19 +1,19 @@
 // navigation/StackNavigator.js
 import React, { useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import WelcomeScreen from "../screens/WelcomeScreen";
-import SignInScreen from "../screens/SignInScreen";
+import OnboardingScreen from "../screens/OnboardingScreen";
+import BottomTabNavigator from "../navigation/BottomTabNavigator";
 
 const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="Welcome"
+      initialRouteName="Onboarding"
       screenOptions={{ headerShown: false }}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="Signin" component={SignInScreen} />
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <Stack.Screen name="BottomNavigator" component={BottomTabNavigator} />
     </Stack.Navigator>
   );
 };
