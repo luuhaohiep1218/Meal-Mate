@@ -1,9 +1,11 @@
+
 import React from "react";
 import { View, Text, Button } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoadingScreen from "./screens/LoadingScreen";
 import StackNavigator from "./navigation/StackNavigator";
+
 
 const AppNav = () => {
   const { user, loading, hasUserInfo, checkingInfo, error, checkUserInfo } =
@@ -28,6 +30,7 @@ const AppNav = () => {
   // }
 
   return <StackNavigator user={user} />;
+
 };
 
 export default function App() {
