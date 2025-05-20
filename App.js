@@ -1,15 +1,13 @@
-import React, { useContext, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { NavigationContainer } from "@react-navigation/native";
 
+import { doc, getDoc } from "firebase/firestore";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { db } from "./firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
 
-import BottomTabNavigator from "./navigation/BottomTabNavigator";
+import StackNavigator from "./navigation/StackNavigator";
 import LoadingScreen from "./screens/LoadingScreen";
-import WelcomeScreen from "./screens/WelcomeScreen";
-import OnboardingScreen from "./screens/OnboardingScreen";
 
 // const AppNav = () => {
 //   const { user, loading } = useAuth();
@@ -64,9 +62,9 @@ const AppNav = () => {
   }
 
   if (loading || checkingInfo) return <LoadingScreen />;
-  if (!user) return <WelcomeScreen />;
-  if (!hasUserInfo) return <OnboardingScreen />;
-  return <BottomTabNavigator />;
+
+  // Chỉ trả về StackNavigator, truyền props
+  return <StackNavigator user={user} hasUserInfo={hasUserInfo} />;
 };
 
 export default function App() {
