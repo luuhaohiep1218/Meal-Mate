@@ -2,14 +2,39 @@ import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { View } from "react-native";
 import QuestionFlow from "../components/QuestionFlow";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const OnboardingScreen = () => {
   const navigation = useNavigation();
+  const { user, setHasUserInfo } = useAuth();
 
-  const handleComplete = (answers) => {
+  const handleComplete = async (answers) => {
     console.log("All answers:", answers);
-    // Chuyển hướng đến BottomTabNavigator
-    navigation.replace("BottomNavigator");
+
+    try {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(
+          userDocRef,
+          {
+            ...answers,
+            createdAt: new Date(),
+          },
+          { merge: true }
+        );
+
+        setHasUserInfo(true);
+        navigation.replace("BottomTab");
+      } else {
+        console.warn("No authenticated user found.");
+      }
+    } catch (error) {
+      console.error("Error saving onboarding answers:", error);
+    }
   };
 
   return (
