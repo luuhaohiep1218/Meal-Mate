@@ -71,7 +71,7 @@ const AuthModal = ({ visible, onClose }) => {
 
   return (
     <Modal animationType="slide" transparent visible={visible}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.modalOverlay}>
           <View style={styles.topHalf} />
           <View style={styles.bottomSheet}>

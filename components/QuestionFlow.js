@@ -10,7 +10,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import DatePicker from "react-native-date-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const QuestionFlow = ({ onComplete }) => {
   const questions = [
@@ -74,32 +74,10 @@ const QuestionFlow = ({ onComplete }) => {
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef();
 
-  // Debug mount/unmount
-  useEffect(() => {
-    console.log(
-      "QuestionFlow mounted, currentQuestionIndex:",
-      currentQuestionIndex
-    );
-    return () => console.log("QuestionFlow unmounted");
-  }, []);
-
-  // Debug trạng thái định kỳ
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("QuestionFlow state:", {
-        currentQuestionIndex,
-        answers,
-        showDatePicker,
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [currentQuestionIndex, answers, showDatePicker]);
-
   const currentQuestion = questions[currentQuestionIndex];
 
   const handleAnswer = useCallback(
     (value) => {
-      console.log(`Answer for ${currentQuestion.id}:`, value);
       setAnswers((prev) => ({
         ...prev,
         [currentQuestion.id]: value,
@@ -110,13 +88,12 @@ const QuestionFlow = ({ onComplete }) => {
 
   const handleDateChange = useCallback(
     (selectedDate) => {
-      console.log("Date picker selected:", selectedDate);
       setShowDatePicker(false);
 
       if (selectedDate) {
         try {
           const formattedDate = selectedDate.toISOString().split("T")[0];
-          console.log("Selected date formatted:", formattedDate);
+
           handleAnswer(formattedDate);
           goToNextQuestion();
         } catch (error) {
@@ -124,19 +101,16 @@ const QuestionFlow = ({ onComplete }) => {
           Alert.alert("Lỗi", "Không thể xử lý ngày đã chọn. Vui lòng thử lại.");
         }
       } else {
-        console.log("No date selected");
       }
     },
     [handleAnswer]
   );
 
   const handleCancelDatePicker = useCallback(() => {
-    console.log("Date picker cancelled");
     setShowDatePicker(false);
   }, []);
 
   const handleNumericInputSubmit = useCallback(() => {
-    console.log("Numeric input submit:", inputValue);
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue)) {
       Alert.alert("Lỗi", "Vui lòng nhập một số hợp lệ (ví dụ: 170)");
@@ -176,18 +150,15 @@ const QuestionFlow = ({ onComplete }) => {
 
   const goToNextQuestion = useCallback(() => {
     if (currentQuestionIndex < questions.length - 1) {
-      console.log("Moving to next question:", currentQuestionIndex + 1);
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     } else {
-      console.log("Calling onComplete with answers:", answers);
       onComplete(answers);
     }
   }, [currentQuestionIndex, answers, onComplete]);
 
   const goToPreviousQuestion = useCallback(() => {
     if (currentQuestionIndex > 0) {
-      console.log("Moving to previous question:", currentQuestionIndex - 1);
       setCurrentQuestionIndex(currentQuestionIndex - 1);
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     }
@@ -195,15 +166,11 @@ const QuestionFlow = ({ onComplete }) => {
 
   const isAnswerSelected = useCallback(() => {
     const selected = answers[currentQuestion.id] !== undefined;
-    console.log(`Is answer selected for ${currentQuestion.id}:`, selected);
+
     return selected;
   }, [answers, currentQuestion.id]);
 
   const toggleDatePicker = useCallback(() => {
-    console.log(
-      "Toggling date picker, current showDatePicker:",
-      showDatePicker
-    );
     setShowDatePicker((prev) => !prev);
   }, [showDatePicker]);
 
@@ -217,7 +184,6 @@ const QuestionFlow = ({ onComplete }) => {
   };
 
   const renderQuestionInput = () => {
-    console.log("Rendering question input for type:", currentQuestion.type);
     switch (currentQuestion.type) {
       case "multiple-choice":
         return (
@@ -263,38 +229,27 @@ const QuestionFlow = ({ onComplete }) => {
             </TouchableOpacity>
 
             {showDatePicker && (
-              <View style={styles.datePickerContainer}>
-                <DatePicker
-                  date={
-                    answers[currentQuestion.id] &&
-                    isValidDate(answers[currentQuestion.id])
-                      ? new Date(answers[currentQuestion.id])
-                      : new Date(
-                          new Date().setFullYear(new Date().getFullYear() - 18)
-                        )
+              <DateTimePicker
+                value={
+                  answers[currentQuestion.id] &&
+                  isValidDate(answers[currentQuestion.id])
+                    ? new Date(answers[currentQuestion.id])
+                    : new Date(
+                        new Date().setFullYear(new Date().getFullYear() - 18)
+                      )
+                }
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                maximumDate={new Date()}
+                minimumDate={new Date(1900, 0, 1)}
+                onChange={(event, selectedDate) => {
+                  if (event.type === "dismissed") {
+                    handleCancelDatePicker();
+                  } else {
+                    handleDateChange(selectedDate);
                   }
-                  onDateChange={handleDateChange}
-                  mode="date"
-                  maximumDate={new Date()}
-                  minimumDate={new Date(1900, 0, 1)}
-                  androidVariant="nativeAndroid"
-                  iosMode="spinner"
-                  style={styles.datePicker}
-                  accessible={true}
-                  accessibilityLabel="Chọn ngày tháng năm sinh"
-                  textColor="#333"
-                  fadeToColor="white"
-                />
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={handleCancelDatePicker}
-                  accessible={true}
-                  accessibilityLabel="Hủy chọn ngày"
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.cancelButtonText}>Hủy</Text>
-                </TouchableOpacity>
-              </View>
+                }}
+              />
             )}
           </View>
         );
@@ -311,7 +266,7 @@ const QuestionFlow = ({ onComplete }) => {
               onSubmitEditing={handleNumericInputSubmit}
               accessible={true}
               accessibilityLabel={currentQuestion.title}
-              accessibilityRole="textbox"
+              accessibilityRole="text"
             />
             <TouchableOpacity
               style={styles.inputSubmitButton}
@@ -326,8 +281,6 @@ const QuestionFlow = ({ onComplete }) => {
         );
 
       default:
-        console.log("Unknown question type:", currentQuestion.type);
-        return null;
     }
   };
 

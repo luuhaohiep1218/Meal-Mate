@@ -8,12 +8,10 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 
 import AuthModal from "../components/modals/AuthModal";
 
 export default function WelcomeScreen() {
-  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
   return (

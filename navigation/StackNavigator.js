@@ -1,19 +1,21 @@
-// navigation/StackNavigator.js
-import React, { useState } from "react";
+import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import WelcomeScreen from "../screens/WelcomeScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
-import BottomTabNavigator from "../navigation/BottomTabNavigator";
-
+import BottomTabNavigator from "./BottomTabNavigator";
+import { useAuth } from "../context/AuthContext";
 const Stack = createNativeStackNavigator();
 
-const StackNavigator = () => {
+const StackNavigator = ({ user }) => {
+  const { hasUserInfo } = useAuth();
   return (
-    <Stack.Navigator
-      initialRouteName="Onboarding"
-      screenOptions={{ headerShown: false }}
-    >
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-      <Stack.Screen name="BottomNavigator" component={BottomTabNavigator} />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!user ? (
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      ) : !hasUserInfo ? (
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      ) : null}
+      <Stack.Screen name="BottomTab" component={BottomTabNavigator} />
     </Stack.Navigator>
   );
 };
