@@ -120,6 +120,7 @@ const DailyScreen = () => {
         <MealModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
+          
           onAddFood={(items, calories) =>
             handleAddFood(currentMeal.type, items, calories)
           }

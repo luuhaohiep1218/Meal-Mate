@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import {
@@ -6,8 +6,8 @@ import {
   onAuthStateChanged,
   signInWithCredential,
 } from "firebase/auth";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../firebaseConfig";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,10 +17,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId:
+    "384508604797-55c7svjfqq9de2nlc3bnpbmguqbsn957.apps.googleusercontent.com",
     iosClientId:
       "384508604797-lk2sjv5kmtm5i2cujqkb11nojvgu2uke.apps.googleusercontent.com",
     androidClientId:
-      "384508604797-2pvba89k1hp5c4iopi00hka14nb45rgs.apps.googleusercontent.com",
+      "384508604797-um7ohonkodsvboiigfu0mpadosftuokh.apps.googleusercontent.com",
   });
 
   const checkLocalUser = async () => {

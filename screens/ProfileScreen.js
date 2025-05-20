@@ -1,15 +1,27 @@
-import React, { useContext } from "react";
-import { View, Text, StyleSheet, Button } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { signOut } from "firebase/auth";
+import React from "react";
+import { Button, StyleSheet, Text, View } from "react-native";
 import { auth } from "../firebaseConfig";
 
 const ProfileScreen = () => {
+  const navigation = useNavigation();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigation.replace('Welcome');
+    } catch (error) {
+      console.error("Lỗi đăng xuất:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Thông tin người dùng</Text>
       <Button
         title="Đăng xuất"
-        onPress={async () => await signOut(auth)}
+        onPress={handleSignOut}
         color="#E53935"
       />
     </View>
