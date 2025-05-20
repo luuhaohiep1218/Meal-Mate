@@ -1,75 +1,116 @@
-import React, { useContext, useState, useEffect } from "react";
-
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, Button } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { db } from "./firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomTabNavigator from "./navigation/BottomTabNavigator";
 import LoadingScreen from "./screens/LoadingScreen";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import OnboardingScreen from "./screens/OnboardingScreen";
 
-// const AppNav = () => {
-//   const { user, loading } = useAuth();
-
-//   if (loading) return <LoadingScreen />;
-
-//   return user ? <BottomTabNavigator /> : <WelcomeScreen />;
-// };
 const AppNav = () => {
   const { user, loading } = useAuth();
-  const [hasUserInfo, setHasUserInfo] = useState(false);
+  const [hasUserInfo, setHasUserInfo] = useState(null);
   const [checkingInfo, setCheckingInfo] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const checkUserInfo = async () => {
-      try {
-        if (!user || !user.uid) {
-          setCheckingInfo(false);
-          return;
-        }
+  const checkUserInfo = useCallback(async () => {
+    try {
+      console.log(
+        "checkUserInfo started, user:",
+        user ? user.uid : null,
+        "loading:",
+        loading
+      );
+      setCheckingInfo(true);
 
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-
-        // More robust check for user info
-        const userData = userDoc.data();
-        const hasRequiredInfo =
-          userData &&
-          userData.age !== undefined &&
-          userData.height !== undefined &&
-          userData.weight !== undefined;
-
-        setHasUserInfo(hasRequiredInfo);
-        setCheckingInfo(false);
-      } catch (error) {
-        console.error("Error checking user info:", error);
-        setError(error);
-        setCheckingInfo(false);
+      if (!user || !user.uid) {
+        console.log("No user or user.uid, setting hasUserInfo to false");
+        setHasUserInfo(false);
+        return;
       }
-    };
 
-    checkUserInfo();
+      // Chỉ kiểm tra AsyncStorage
+      const cachedHasUserInfo = await AsyncStorage.getItem(
+        `userInfo_${user.uid}`
+      );
+      console.log("Cached userInfo:", cachedHasUserInfo);
+      setHasUserInfo(cachedHasUserInfo ? JSON.parse(cachedHasUserInfo) : false);
+    } catch (error) {
+      console.error("Error in checkUserInfo:", error);
+      setError(error.message || "Failed to load user data");
+      setHasUserInfo(false);
+    } finally {
+      setCheckingInfo(false);
+      console.log("checkUserInfo completed, checkingInfo:", false);
+    }
   }, [user]);
 
+  useEffect(() => {
+    console.log("AppNav mounted, running checkUserInfo");
+    checkUserInfo();
+  }, [checkUserInfo]);
+
+  // Debug trạng thái định kỳ
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("AppNav state:", {
+        user: user ? user.uid : null,
+        loading,
+        checkingInfo,
+        hasUserInfo,
+        error,
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [user, loading, checkingInfo, hasUserInfo, error]);
+
   if (error) {
+    console.log("Rendering error screen:", error);
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Error loading user data. Please try again.</Text>
-        <Button title="Retry" onPress={() => setCheckingInfo(true)} />
+        <Text>{error}</Text>
+        <Button
+          title="Retry"
+          onPress={() => {
+            console.log("Retry pressed");
+            setError(null);
+            setCheckingInfo(true);
+            checkUserInfo();
+          }}
+        />
       </View>
     );
   }
 
-  if (loading || checkingInfo) return <LoadingScreen />;
-  if (!user) return <WelcomeScreen />;
-  if (!hasUserInfo) return <OnboardingScreen />;
+  // if (loading || checkingInfo || hasUserInfo === null) {
+  //   console.log(
+  //     "Rendering LoadingScreen: loading=",
+  //     loading,
+  //     "checkingInfo=",
+  //     checkingInfo,
+  //     "hasUserInfo=",
+  //     hasUserInfo
+  //   );
+  //   return <LoadingScreen />;
+  // }
+
+  if (!user) {
+    console.log("Rendering WelcomeScreen: no user");
+    return <WelcomeScreen />;
+  }
+
+  if (!hasUserInfo) {
+    console.log("Rendering OnboardingScreen: hasUserInfo=", hasUserInfo);
+    return <OnboardingScreen setHasUserInfo={setHasUserInfo} />;
+  }
+
+  console.log("Rendering BottomTabNavigator");
   return <BottomTabNavigator />;
 };
 
 export default function App() {
+  console.log("App mounted");
   return (
     <AuthProvider>
       <NavigationContainer>
