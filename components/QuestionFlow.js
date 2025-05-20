@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import {
   Platform,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 
 const QuestionFlow = ({ onComplete }) => {
   const questions = [
@@ -29,7 +28,7 @@ const QuestionFlow = ({ onComplete }) => {
     },
     {
       id: "gender",
-      type: "picker",
+      type: "multiple-choice",
       title: "Giới tính của bạn?",
       options: ["Nam", "Nữ", "Khác"],
     },
@@ -77,63 +76,111 @@ const QuestionFlow = ({ onComplete }) => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  const handleAnswer = (value) => {
-    setAnswers({
-      ...answers,
-      [currentQuestion.id]: value,
-    });
-  };
+  const handleAnswer = useCallback(
+    (value) => {
+      setAnswers((prev) => ({
+        ...prev,
+        [currentQuestion.id]: value,
+      }));
+    },
+    [currentQuestion.id]
+  );
 
-  const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === "ios");
-    if (selectedDate) {
-      const formattedDate = selectedDate.toISOString().split("T")[0];
-      handleAnswer(formattedDate);
-      goToNextQuestion();
-    }
-  };
+  const handleDateChange = useCallback(
+    (selectedDate) => {
+      setShowDatePicker(false);
 
-  const handleNumericInputSubmit = () => {
+      if (selectedDate) {
+        try {
+          const formattedDate = selectedDate.toISOString().split("T")[0];
+
+          handleAnswer(formattedDate);
+          goToNextQuestion();
+        } catch (error) {
+          console.error("Error formatting date:", error);
+          Alert.alert("Lỗi", "Không thể xử lý ngày đã chọn. Vui lòng thử lại.");
+        }
+      } else {
+      }
+    },
+    [handleAnswer]
+  );
+
+  const handleCancelDatePicker = useCallback(() => {
+    setShowDatePicker(false);
+  }, []);
+
+  const handleNumericInputSubmit = useCallback(() => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue)) {
-      Alert.alert("Lỗi", "Vui lòng nhập số hợp lệ");
+      Alert.alert("Lỗi", "Vui lòng nhập một số hợp lệ (ví dụ: 170)");
       return;
     }
 
     if (currentQuestion.min && numValue < currentQuestion.min) {
-      Alert.alert("Lỗi", `Giá trị không được nhỏ hơn ${currentQuestion.min}`);
+      Alert.alert(
+        "Lỗi",
+        `Giá trị phải lớn hơn hoặc bằng ${currentQuestion.min} ${
+          currentQuestion.id === "height" ? "cm" : "kg"
+        }`
+      );
       return;
     }
 
     if (currentQuestion.max && numValue > currentQuestion.max) {
-      Alert.alert("Lỗi", `Giá trị không được lớn hơn ${currentQuestion.max}`);
+      Alert.alert(
+        "Lỗi",
+        `Giá trị phải nhỏ hơn hoặc bằng ${currentQuestion.max} ${
+          currentQuestion.id === "height" ? "cm" : "kg"
+        }`
+      );
       return;
     }
 
     handleAnswer(numValue);
     setInputValue("");
     goToNextQuestion();
-  };
+  }, [
+    inputValue,
+    currentQuestion.id,
+    currentQuestion.min,
+    currentQuestion.max,
+    handleAnswer,
+  ]);
 
-  const goToNextQuestion = () => {
+  const goToNextQuestion = useCallback(() => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     } else {
       onComplete(answers);
     }
-  };
+  }, [currentQuestionIndex, answers, onComplete]);
 
-  const goToPreviousQuestion = () => {
+  const goToPreviousQuestion = useCallback(() => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     }
-  };
+  }, [currentQuestionIndex]);
 
-  const isAnswerSelected = () => {
-    if (currentQuestion.type === "picker") return true; // Picker luôn có giá trị mặc định
-    return answers[currentQuestion.id] !== undefined;
+  const isAnswerSelected = useCallback(() => {
+    const selected = answers[currentQuestion.id] !== undefined;
+
+    return selected;
+  }, [answers, currentQuestion.id]);
+
+  const toggleDatePicker = useCallback(() => {
+    setShowDatePicker((prev) => !prev);
+  }, [showDatePicker]);
+
+  const isValidDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return !isNaN(date.getTime());
+    } catch {
+      return false;
+    }
   };
 
   const renderQuestionInput = () => {
@@ -149,31 +196,14 @@ const QuestionFlow = ({ onComplete }) => {
                   answers[currentQuestion.id] === option &&
                     styles.selectedOption,
                 ]}
-                onPress={() => {
-                  handleAnswer(option);
-                  setTimeout(goToNextQuestion, 300); // Tự động chuyển sau khi chọn
-                }}
+                onPress={() => handleAnswer(option)}
+                accessible={true}
+                accessibilityLabel={option}
+                accessibilityRole="button"
               >
                 <Text style={styles.optionText}>{option}</Text>
               </TouchableOpacity>
             ))}
-          </View>
-        );
-
-      case "picker":
-        return (
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={
-                answers[currentQuestion.id] || currentQuestion.options[0]
-              }
-              onValueChange={(itemValue) => handleAnswer(itemValue)}
-              style={styles.picker}
-            >
-              {currentQuestion.options.map((option, index) => (
-                <Picker.Item key={index} label={option} value={option} />
-              ))}
-            </Picker>
           </View>
         );
 
@@ -182,7 +212,10 @@ const QuestionFlow = ({ onComplete }) => {
           <View style={styles.dateInputContainer}>
             <TouchableOpacity
               style={styles.dateInput}
-              onPress={() => setShowDatePicker(true)}
+              onPress={toggleDatePicker}
+              accessible={true}
+              accessibilityLabel="Chọn ngày sinh"
+              accessibilityRole="button"
             >
               <Text
                 style={
@@ -197,11 +230,25 @@ const QuestionFlow = ({ onComplete }) => {
 
             {showDatePicker && (
               <DateTimePicker
-                value={new Date()}
+                value={
+                  answers[currentQuestion.id] &&
+                  isValidDate(answers[currentQuestion.id])
+                    ? new Date(answers[currentQuestion.id])
+                    : new Date(
+                        new Date().setFullYear(new Date().getFullYear() - 18)
+                      )
+                }
                 mode="date"
-                display="default"
-                onChange={handleDateChange}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
                 maximumDate={new Date()}
+                minimumDate={new Date(1900, 0, 1)}
+                onChange={(event, selectedDate) => {
+                  if (event.type === "dismissed") {
+                    handleCancelDatePicker();
+                  } else {
+                    handleDateChange(selectedDate);
+                  }
+                }}
               />
             )}
           </View>
@@ -217,10 +264,16 @@ const QuestionFlow = ({ onComplete }) => {
               value={inputValue}
               onChangeText={setInputValue}
               onSubmitEditing={handleNumericInputSubmit}
+              accessible={true}
+              accessibilityLabel={currentQuestion.title}
+              accessibilityRole="text"
             />
             <TouchableOpacity
               style={styles.inputSubmitButton}
               onPress={handleNumericInputSubmit}
+              accessible={true}
+              accessibilityLabel="Xác nhận giá trị nhập"
+              accessibilityRole="button"
             >
               <Text style={styles.inputSubmitText}>Xác nhận</Text>
             </TouchableOpacity>
@@ -228,7 +281,6 @@ const QuestionFlow = ({ onComplete }) => {
         );
 
       default:
-        return null;
     }
   };
 
@@ -258,7 +310,13 @@ const QuestionFlow = ({ onComplete }) => {
         </View>
 
         <View style={styles.questionContainer}>
-          <Text style={styles.questionTitle}>{currentQuestion.title}</Text>
+          <Text
+            style={styles.questionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            {currentQuestion.title}
+          </Text>
           {renderQuestionInput()}
         </View>
       </ScrollView>
@@ -268,27 +326,43 @@ const QuestionFlow = ({ onComplete }) => {
           <TouchableOpacity
             style={[styles.navButton, styles.backButton]}
             onPress={goToPreviousQuestion}
+            accessible={true}
+            accessibilityLabel="Quay lại câu hỏi trước"
+            accessibilityRole="button"
           >
             <Text style={styles.navButtonText}>Quay lại</Text>
           </TouchableOpacity>
         )}
 
-        {currentQuestion.type !== "numeric-input" && (
-          <TouchableOpacity
-            style={[styles.navButton, styles.nextButton]}
-            onPress={goToNextQuestion}
-            disabled={!isAnswerSelected()}
-          >
-            <Text style={styles.navButtonText}>
-              {currentQuestionIndex === questions.length - 1
-                ? "Hoàn thành"
-                : "Tiếp tục"}
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            styles.nextButton,
+            !isAnswerSelected() && styles.disabledButton,
+          ]}
+          onPress={goToNextQuestion}
+          disabled={!isAnswerSelected()}
+          accessible={true}
+          accessibilityLabel={
+            currentQuestionIndex === questions.length - 1
+              ? "Hoàn thành khảo sát"
+              : "Tiếp tục đến câu hỏi tiếp theo"
+          }
+          accessibilityRole="button"
+        >
+          <Text style={styles.navButtonText}>
+            {currentQuestionIndex === questions.length - 1
+              ? "Hoàn thành"
+              : "Tiếp tục"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <Text style={styles.footerText}>
+      <Text
+        style={styles.footerText}
+        accessible={true}
+        accessibilityRole="text"
+      >
         Chúng tôi sử dụng thông tin này để tính toán và cung cấp cho bạn các
         khuyến nghị được cá nhân hóa hàng ngày
       </Text>
@@ -356,17 +430,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#333",
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 8,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    overflow: "hidden",
-  },
-  picker: {
-    width: "100%",
-  },
   dateInputContainer: {
     marginHorizontal: 20,
     marginBottom: 20,
@@ -387,6 +450,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     color: "#888",
+  },
+  datePickerContainer: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  datePicker: {
+    backgroundColor: "#fff",
+    marginBottom: 10,
+  },
+  cancelButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "bold",
   },
   numericInputContainer: {
     marginHorizontal: 20,
@@ -432,6 +514,10 @@ const styles = StyleSheet.create({
   nextButton: {
     backgroundColor: "#FFC107",
     marginLeft: "auto",
+  },
+  disabledButton: {
+    backgroundColor: "#cccccc",
+    opacity: 0.6,
   },
   navButtonText: {
     fontSize: 16,

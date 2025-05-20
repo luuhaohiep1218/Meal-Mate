@@ -2,6 +2,7 @@
   "expo": {
     "name": "Mealmate",
     "slug": "Mealmate",
+    "owner": "luuhaohiep1218",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
